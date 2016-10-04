@@ -27,16 +27,14 @@ for k = 1:length(fileName)
         end
     end
     
-    [coeff,score,latent] = pca(data);
+    [idx,C,sumd,D] = kmeans(data, dimensionality);
     
-    new_score = mat2cell(score, number_of_column_of_new_data,[dimensionality dimensionlaity_of_new_data-dimensionality]);
-    new_score = cell2mat(new_score(1,1));
     new_txt = txt(:,1);
 
     output_path = uigetdir('select the directory to store an output file');
     
     str = char(fileName{k});
-    output_name = strcat('out_file_', num2str(dimensionality), '_', str(1,8), 'pca.csv');
+    output_name = strcat('out_file_', num2str(dimensionality), '_', str(1,8), 'km.csv');
     
     output = fullfile(output_path, output_name);
     fid=fopen(output, 'wb');    
@@ -47,7 +45,7 @@ for k = 1:length(fileName)
         fprintf(fid, ',%d', new_data(i,2));
         fprintf(fid, ',%d', new_data(i,3));
         for j = 1:dimensionality
-            fprintf(fid, ',%f', new_score(i,j));
+            fprintf(fid, ',%f', D(i,j));
         end
         
         fprintf(fid, '\n');
