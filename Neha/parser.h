@@ -14,8 +14,51 @@ using namespace std;
 class parser
 {
     public:
+	
+		typedef int t_video_num;
+        typedef vector<int> histogram;
+        typedef histogram::iterator t_hist_it;
+		class t_cell
+        {
+            public:
+            int cell_no;
+            histogram hist;
+        };
+        class t_frame
+        {
+            public:
+            int f_no;
+            t_cell* cells;
+			int n_bin;
+			int pixel_per_cell;
+			bool is_pixel_count_calculated;
+			
+            t_frame(int f, int r, int n)
+            {
+                //frame number
+                f_no=f;
+				n_bin=n;
+                cells=new t_cell[r*r];
+				pixel_per_cell=0;
+				is_pixel_count_calculated=false;
+            }
+            ~t_frame()
+            {
+                //deallocate cells
+                delete[] cells;
+            }
+	
+			int get_pixel_per_cell();
+        };
+		typedef shared_ptr<t_frame> t_ptr_frame;
+        typedef vector<t_ptr_frame> t_frames;
+        typedef map<t_video_num, t_frames> t_videos_map;
+        typedef t_videos_map::iterator t_video_iterator;
+        typedef t_frames::iterator t_frames_iterator;
+
+        
         /** Default constructor */
-        parser(int r);
+        parser(int r,int n);
         /** Default destructor */
         virtual ~parser();
         void read_and_store_records();
@@ -24,42 +67,12 @@ class parser
         void reset_curr_frame();
         void add_old_frame_to_video();
         void reset_curr_video();
+		double get_score(int v1, int v2);
+		double frame_dist(t_frame& f1, t_frame& f2);
+		double cell_dist(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2);
         void print();
     protected:
-        typedef int t_video_num;
-        typedef vector<int> histogram;
-        typedef histogram::iterator t_hist_it;
-        class t_cell
-        {
-            public:
-            int cell_no;
-            histogram hist;
-        };
-
-        class t_frame
-        {
-            public:
-            int f_no;
-            t_cell* cells;
-            t_frame(int f, int r)
-            {
-                //frame number
-                f_no=f;
-                //allocate cells by size
-                cells=new t_cell[r*r];
-            }
-            ~t_frame()
-            {
-                //deallocate cells
-                delete[] cells;
-            }
-        };
-        typedef shared_ptr<t_frame> t_ptr_frame;
-        typedef vector<t_ptr_frame> t_frames;
-        typedef map<t_video_num, t_frames> t_videos_map;
-        typedef t_videos_map::iterator t_video_iterator;
-        typedef t_frames::iterator t_frames_iterator;
-
+        
         t_videos_map videos;
         t_video_iterator vid_iterator;
         t_frames curr_video_frames;
