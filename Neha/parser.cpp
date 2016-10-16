@@ -256,7 +256,7 @@ int main()
 	    cin >>r>>n;// see if this would work
 	    parser p=parser(r,n);
         p.read_and_store_records();
-        p.print();
+        //p.print();
 	
 	//else
 		//cout<< "\nMissing parameter value.\nUsage: ./task1a.exe <r>";
