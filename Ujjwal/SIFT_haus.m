@@ -1,16 +1,17 @@
 %function SIFT_Sample(fileName)
-
+%Hausdroff distance between two point sets. Range [0,1.414] if normalized
+%unitvectors are used. like sift. Have to check if 
 fileName='oldVideos_SIFT.csv';
 delimiter=',';
 hist=importdata(fileName,delimiter);
 histMaxRow=size(hist.data,1);
 
 nFrames1=75;
-nFrames2=75;
+nFrames2=50;
 strt=1;
 
-file1='2R.mp4';
-file2='3R.mp4';
+file1='1R.mp4';
+file2='square_L_R_texture.mp4';
 
 %Extract file1
 ind1= find(strcmp(hist.textdata(:,1),file1));
