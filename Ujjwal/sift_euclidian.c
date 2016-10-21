@@ -8,7 +8,7 @@
 
 #define MAX_DOUBLE mxGetInf()
 
-void computeDistance(const double *D1,const double *D2, int col_D1, int col_D2,int dim, float thres){
+double computeDistance(const double *D1,const double *D2, int col_D1, int col_D2,int dim, float thres){
 	int i,j;
 	int matchCount=0;
 	int loopCounter=0;
@@ -41,8 +41,10 @@ void computeDistance(const double *D1,const double *D2, int col_D1, int col_D2,i
 				matchCount++;
 			}
 		}
-	mexPrintf("No of Sift matches: %d\n",matchCount);
-	mexPrintf("No of loops: %d\n",loopCounter);
+	//mexPrintf("No of Sift matches: %d\n",matchCount);
+	//mexPrintf("No of loops: %d\n",loopCounter);
+	return 1-matchCount*2/(double)(col_D1+col_D2);
+	
 }
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	
@@ -73,5 +75,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	
 	//Set thres
 	float thres=1.5;
-	computeDistance(D1,D2,col_D1,col_D2,dim,thres);
+	//Check if any of the vector is empty
+	if(col_D2>1){
+		double d=computeDistance(D1,D2,col_D1,col_D2,dim,thres);
+		plhs[0]=mxCreateDoubleScalar(d);
+	}
+	else {
+		plhs[0]=mxCreateDoubleScalar(MAX_DOUBLE);	
+	}
 }
