@@ -68,8 +68,12 @@ class parser
         void add_old_frame_to_video();
         void reset_curr_video();
 		double get_score(int v1, int v2);
-		double frame_dist(t_frame& f1, t_frame& f2);
-		double cell_dist(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2);
+		double frame_dist_manhattan(t_frame& f1, t_frame& f2);
+		double frame_dist_intersect(t_frame& f1, t_frame& f2);
+		double frame_dist_ch_sq(t_frame& f1, t_frame& f2);
+		double cell_dist_manhattan(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2);
+		double cell_dist_intersect(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2);
+		double cell_dist_chi_sq(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2);
         void print();
     protected:
         

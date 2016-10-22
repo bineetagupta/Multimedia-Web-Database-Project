@@ -31,6 +31,8 @@ void parser::read_and_store_records()
 	{
 		tokenize_record_and_store_in_map(record);
 	}
+	reset_curr_video();//store the last video after the last record is read
+	
 }
 
 
@@ -63,9 +65,9 @@ void parser::tokenize_record(const string & record)
 		if(std::getline(ss, token, ','))
 		{
 			vid_no=atoi(token.c_str()); //Add assumption in report: each video file name starts with a unique numerical string; alternatively you can change the code to map each video name to a number and output the mapping somewhere.
+			b_same_video=(vid_no==last_vid_no && last_vid_no!=-1)?true:false;
 			if(last_vid_no==-1)
 				last_vid_no=vid_no;
-			b_same_video=(vid_no==last_vid_no)?true:false;
 		}
 		//get the frame number
 		if(std::getline(ss, token, ','))
@@ -150,11 +152,10 @@ void parser::print()
                 cout<<endl;
             }
         }
-
     }
 }
 
-double parser::cell_dist(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2)
+double parser::cell_dist_manhattan(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2)
 {
 	histogram h1=c1.hist;
 	histogram h2=c2.hist;
@@ -165,15 +166,79 @@ double parser::cell_dist(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2)
 	}
 }
 
-double parser::frame_dist(t_frame& f1, t_frame& f2)
+double parser::cell_dist_intersect(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2)
+{
+	histogram h1=c1.hist;
+	histogram h2=c2.hist;
+	double dist=0,max=0,min=0;
+	for(int i=0;i<n;i++)
+	{
+		max+=(double(h1[i])/pix_cnt1) > (double(h2[i])/pix_cnt2)?(double(h1[i])/pix_cnt1):(double(h2[i])/pix_cnt2);
+		min+=(double(h1[i])/pix_cnt1) > (double(h2[i])/pix_cnt2)?(double(h2[i])/pix_cnt2):(double(h1[i])/pix_cnt1);
+	}
+	dist=min/max;
+}
+
+
+double parser::cell_dist_chi_sq(t_cell c1, t_cell c2, int pix_cnt1, int pix_cnt2)
+{
+	histogram h1=c1.hist;
+	histogram h2=c2.hist;
+	double dist=0,x1=0,x2=0;
+	for(int i=0;i<n;i++)
+	{
+		x1=(double(h1[i])/pix_cnt1);
+		x2=(double(h2[i])/pix_cnt2);
+		if(x1!=0 || x2!=0)
+			dist+=(fabs(x1-x2)/(x1+x2));
+		//if(x1!=0)
+			//dist+=(pow(x1-x2,2)/(x1));
+	}
+	return dist;//no normalization here, normalise at the frame level
+}
+
+
+double parser::frame_dist_manhattan(t_frame& f1, t_frame& f2)
+{
+	int total_cells=r*r;
+	double dist=0,cell_dist,max_dist=0;
+	int f1_pix_cnt=f1.get_pixel_per_cell();
+	int f2_pix_cnt=f2.get_pixel_per_cell();
+	for(int i=0;i<total_cells;i++)
+	{
+		cell_dist=cell_dist_manhattan(f1.cells[i], f2.cells[i],f1_pix_cnt,f2_pix_cnt);
+		if(cell_dist>max_dist)
+			max_dist=cell_dist;
+		dist+=cell_dist;
+	}
+	return (dist/(max_dist*total_cells));
+}
+
+double parser::frame_dist_intersect(t_frame& f1, t_frame& f2)
 {
 	int total_cells=r*r;
 	double dist=0;
 	int f1_pix_cnt=f1.get_pixel_per_cell();
 	int f2_pix_cnt=f2.get_pixel_per_cell();
 	for(int i=0;i<total_cells;i++)
-		dist+=cell_dist(f1.cells[i], f2.cells[i],f1_pix_cnt,f2_pix_cnt);
-	return dist;
+		dist+=cell_dist_intersect(f1.cells[i], f2.cells[i],f1_pix_cnt,f2_pix_cnt);
+	return (dist/total_cells);
+}
+
+double parser::frame_dist_ch_sq(t_frame& f1, t_frame& f2)
+{
+	int total_cells=r*r;
+	double dist=0,cell_dist,max_dist=0;
+	int f1_pix_cnt=f1.get_pixel_per_cell();
+	int f2_pix_cnt=f2.get_pixel_per_cell();
+	for(int i=0;i<total_cells;i++)
+	{
+		cell_dist=cell_dist_chi_sq(f1.cells[i], f2.cells[i],f1_pix_cnt,f2_pix_cnt);
+		if(cell_dist>max_dist)
+			max_dist=cell_dist;
+		dist+=cell_dist;
+	}
+	return (dist/(max_dist*total_cells));
 }
 
 int parser::t_frame::get_pixel_per_cell()
@@ -211,7 +276,8 @@ double parser::get_score(int v1, int v2)
 		//initialise the distance measure for the first frame pair
 		t_frames_iterator f1=vit1->second.begin();
 		t_frames_iterator f2=vit2->second.begin();
-		dist_matrix[0][0]=frame_dist(**f1,**f2)*2.0/(m+n);
+		//dist_matrix[0][0]=frame_dist_ch_sq(**f1,**f2)*2.0/(m+n);
+		dist_matrix[0][0]=frame_dist_intersect(**f1,**f2)*2.0/(m+n);
 		
 		//start the DP to calculate minimum sum aligned sequence of frames
 		double d,d1,d2,d3;
@@ -235,7 +301,9 @@ double parser::get_score(int v1, int v2)
 			for(int j=1; fit2 != vid2.end() && j<n; ++fit2,++j)
 			{
 				double min=0;
-				d=frame_dist(**fit1,**fit2)/(m+n);
+				//d=frame_dist(**fit1,**fit2)/(m+n);
+				//d=frame_dist_ch_sq(**fit1,**fit2)/(m+n);
+				d=frame_dist_intersect(**fit1,**fit2)/(m+n);
 				d1=dist_matrix[i-1][j-1]+2*d;
 				d2=dist_matrix[i][j-1]+d;
 				d3=dist_matrix[i-1][j]+d;
@@ -256,7 +324,7 @@ int main()
 	    cin >>r>>n;// see if this would work
 	    parser p=parser(r,n);
         p.read_and_store_records();
-        //p.print();
+        p.print();
 	
 	//else
 		//cout<< "\nMissing parameter value.\nUsage: ./task1a.exe <r>";
