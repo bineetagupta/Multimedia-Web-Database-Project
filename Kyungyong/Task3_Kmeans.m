@@ -28,22 +28,23 @@ for k = 1:length
     end
     
     % parse data part and txt part
-    [data,txt] = xlsread(fullfile(pathName, current_fileName));
+     delimiter=',';
+     hist=importdata(fullfile(pathName, current_fileName),delimiter);
     
     % parse objects part and vector part
-    video_names = txt(:,1);
+    video_names = hist.textdata(:,1);
 
     if(strcmp(current_fileName,'output_sift.csv')==1)
-        objects = data(:,[1,2,3,4,5,6]);
-        data(:,[1,2,3,4,5,6])=[];
+        objects = hist.data(:,[1,2,3,4,5,6]);
+        hist.data(:,[1,2,3,4,5,6])=[];
     else
-        objects = data(:,[1,2]);
-        data(:,[1,2])=[];
+        objects = hist.data(:,[1,2]);
+        hist.data(:,[1,2])=[];
     end
 
     
     % extract size of data
-    size_of_data = size(data);
+    size_of_data = size(hist.data);
     dimensionlaity_of_data = size_of_data(1,2);
     the_number_of_column_of_data = size_of_data(1,1);
     
@@ -61,12 +62,12 @@ for k = 1:length
     end
     
     % do k-means
-    [idx,C] = kmeans(data, dimensionality, 'MaxIter', 1000);
+    [idx,C] = kmeans(hist.data, dimensionality, 'MaxIter', 1000);
     
     % reduce dimensionality by using orthogonal-triangular decomposition.
     [Q,R] = qr(C.');
     new_Q = Q(:,1:dimensionality);
-    k_means_data = data*new_Q;
+    k_means_data = hist.data*new_Q;
     
     % select output path
     output_path = uigetdir('select the directory to store an output file');

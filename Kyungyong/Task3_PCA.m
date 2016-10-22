@@ -6,7 +6,6 @@ clc;
 %Select input files.
 [fileName, pathName] = uigetfile({'*.*';'*.xls';'*.csv'},'Select files', 'MultiSelect', 'on');
 
-
 % check input the number of input files.
 while(true)
     if(iscell(fileName))
@@ -28,26 +27,29 @@ for k = 1:length
     else
        current_fileName = fileName;
     end
-    
+
     % parse data part and txt part
-    [data,txt] = xlsread(fullfile(pathName, current_fileName));
+    delimiter=',';
+    hist=importdata(fullfile(pathName, current_fileName),delimiter);
     
     % parse objects part and vector part
-    video_names = txt(:,1);
+    video_names = hist.textdata(:,1);
+
 
     if(strcmp(current_fileName,'output_sift.csv')==1)
-        objects = data(:,[1,2,3,4,5,6]);
-        data(:,[1,2,3,4,5,6])=[];
+        objects = hist.data(:,[1,2,3,4,5,6]);
+        hist.data(:,[1,2,3,4,5,6])=[];
     else
-        objects = data(:,[1,2]);
-        data(:,[1,2])=[];
+        objects = hist.data(:,[1,2]);
+        hist.data(:,[1,2])=[];
     end
 
     
     % extract size of data
-    size_of_data = size(data);
+    size_of_data = size(hist.data);
     dimensionlaity_of_data = size_of_data(1,2);
     the_number_of_column_of_data = size_of_data(1,1);
+
     
     % input new dimensionality you want
     prompt = strcat('input dimensionality of \', current_fileName, ' :');
@@ -64,7 +66,7 @@ for k = 1:length
     
     
     % do pca
-    [coeff, score, latent] = pca(data);
+    [coeff, score, latent] = pca(hist.data);
     
     % reduce dimensionality
     new_score = mat2cell(score, the_number_of_column_of_data,[dimensionality dimensionlaity_of_data-dimensionality]);
@@ -110,7 +112,7 @@ for k = 1:length
     fclose(fid);
     
     % create score.
-    X = bsxfun(@minus, data, mean(data,1));            
+    X = bsxfun(@minus, hist.data, mean(hist.data,1));            
     covariancex = (X'*X)./(size(X,1)-1);                 
     [V, D] = eigs(covariancex, dimensionality);
     [nrows,ncols] = size(V);
