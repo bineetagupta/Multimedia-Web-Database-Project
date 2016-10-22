@@ -31,6 +31,7 @@ void parser::read_and_store_records()
 	{
 		tokenize_record_and_store_in_map(record);
 	}
+	add_old_frame_to_video();
 	reset_curr_video();//store the last video after the last record is read
 	
 }
@@ -65,7 +66,7 @@ void parser::tokenize_record(const string & record)
 		if(std::getline(ss, token, ','))
 		{
 			vid_no=atoi(token.c_str()); //Add assumption in report: each video file name starts with a unique numerical string; alternatively you can change the code to map each video name to a number and output the mapping somewhere.
-			b_same_video=(vid_no==last_vid_no && last_vid_no!=-1)?true:false;
+			b_same_video=(vid_no==last_vid_no || last_vid_no==-1)?true:false;
 			if(last_vid_no==-1)
 				last_vid_no=vid_no;
 		}
@@ -74,14 +75,17 @@ void parser::tokenize_record(const string & record)
 		{
 			f_no=atoi(token.c_str());
 			b_same_frame=(b_same_video && f_no==last_frame_no)?true:false;
-			last_frame_no=f_no;
+			//last_frame_no=f_no;
 		}
 		//if this is a new frame, push the old one into the videos vector and update the current frame
-		if(!b_same_frame)
+		if(!b_same_frame)//
         {
-            add_old_frame_to_video();
+			if(last_frame_no!=-1)
+				add_old_frame_to_video();
             reset_curr_frame();
+			
         }
+		last_frame_no=f_no;
 
 		// get the cell number and corresponding histogram
 
@@ -129,7 +133,7 @@ void parser::reset_curr_video()
 void parser::print()
 {
     int n_cells=r*r;
-    for(int i=1;i<=vid_no;i++)
+    for(int i=1;i<=10;i++)
     {
         //find the ith video
         t_video_iterator vit=videos.find(i);
@@ -238,7 +242,8 @@ double parser::frame_dist_ch_sq(t_frame& f1, t_frame& f2)
 			max_dist=cell_dist;
 		dist+=cell_dist;
 	}
-	return (dist/(max_dist*total_cells));
+	//return (dist/(max_dist*total_cells));
+	return (dist/(total_cells));
 }
 
 int parser::t_frame::get_pixel_per_cell()
@@ -324,7 +329,7 @@ int main()
 	    cin >>r>>n;// see if this would work
 	    parser p=parser(r,n);
         p.read_and_store_records();
-        p.print();
+        //p.print();
 	
 	//else
 		//cout<< "\nMissing parameter value.\nUsage: ./task1a.exe <r>";
