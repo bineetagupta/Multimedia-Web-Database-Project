@@ -10,8 +10,8 @@
 #include<memory>// Remember to include the -std=c++0x flag in g++ for compilation
 using namespace std;
 
-typedef multimap<double, pair<int, pair<int,int>>> t_top_k_map;
-typedef multimap<double, pair<int, pair<int,int>>>::iterator t_top_k_map_iterator;
+typedef map<double, pair<int, pair<int,int>>> t_top_k_map;// assumption ignoring repeated same score
+typedef map<double, pair<int, pair<int,int>>>::iterator t_top_k_map_iterator;
 
 class parser
 {
