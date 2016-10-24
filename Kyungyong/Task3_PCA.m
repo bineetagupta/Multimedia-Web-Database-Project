@@ -57,7 +57,7 @@ for k = 1:length
     dimensionality = input(prompt);
     
     while(true)
-        if(dimensionality > 0 || dimensionality <= dimensionlaity_of_data )
+        if(dimensionality > 0 || dimensionality < dimensionlaity_of_data )
             break;
         else
             dimensionality = input('input dimemsionality again(you input wrong value) :');
