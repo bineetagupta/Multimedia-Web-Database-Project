@@ -249,7 +249,7 @@ if(file.good())
 		}
 		column_sum[i] = sum;
 	}
-	//cout << adj_matrix[0][486] << "\n";
+	
 	for(int i = 0; i < row; i++){
 		for(int j = 0; j < row; j++){
 			if(column_sum[i] != 0){
@@ -312,7 +312,7 @@ do{
 	}while(m >= 0);
 	
 	ofstream myfile1;
-  myfile1.open ("similarityscores_4b.csv");
+  myfile1.open ("similarity_score_4b.csv");
 	
 	
 	for(int i = 0; i < row; i++){
@@ -395,7 +395,7 @@ file.close();
  }
  
   ofstream myfile;
-  myfile.open ("example_4b.txt");
+  myfile.open ("top_frame_4b.txt");
 
  
 	   	
