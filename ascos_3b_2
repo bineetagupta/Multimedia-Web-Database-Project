@@ -1,0 +1,445 @@
+#include<iostream>
+#include<stdio.h>
+#include<conio.h>
+#include<math.h>
+#include<string.h>
+#include<stdio.h>
+#include <fstream>
+#include <sstream>
+#include<typeinfo>
+#include <vector>
+#include<map>
+#include<algorithm>
+#include <queue>
+
+typedef std::vector<float> float_vector;
+using namespace std;
+int videoCount = 1;
+int frameCount = 0;
+int array_frame_count[100];
+int index = 0;
+int m = 100;
+float c;
+const float e = 0.01;
+float error, temp, big;
+float column_summ=0;
+int nonzero_value =0;
+int k;
+
+
+  
+int main()
+{
+	
+	cout << "Enter the value of c-" <<endl;
+	cin>>c;
+	cout << "Enter the value of m top frame-" <<endl;
+	cin>>k;
+	
+std::vector< std::vector<float> > adj_matrix;
+std::vector< std::vector<float> > identity_matrix;
+std::vector< std::vector<float> > P;
+std::vector< std::vector<float> > Q; // Matrix that stores the difference between identity_matrix and c*P matrix
+std::vector< std::vector<float> > similarity_score;
+std::vector< std::vector<float> > x;
+std::vector< std::vector<float> > y; 
+array_frame_count[index] = 0; 	
+////////////////////////////////////////////////////////////////////////////////////////
+std::string video; int videoFrame=0; std::string matchedVideo; int matchedVideoFrame=0; float similarity; int row1=0; int column1=0; int f =0 ; float frame;
+////////////////////////////////////////////////////////////////////////////////////////
+
+std::map<std::string,int> videoMap;
+std::ifstream file3(file);
+std::string line3; 
+std::string line;
+
+if(file3.good())
+{
+	
+	while(std::getline(file3,line3))
+	    {
+	    	std::stringstream  lineStream(line3);
+	        std::string cell;
+	         frameCount++;
+	        while (getline(lineStream,cell,','))
+	        {	  
+			   f=f+1; 
+			           
+				if (f==1)
+				{
+					
+					stringstream convert(cell);
+	            	convert >> frame;
+	            	stringstream ss (stringstream::in | stringstream::out);
+				    ss << frame;
+					video = ss.str();
+					
+				}
+				
+				if (f==2)
+				{
+					
+					stringstream convert(cell);
+	                convert >> frame;
+			   	    videoFrame=frame;	
+			   	    if(videoFrame == 1 && frameCount > 5 && frameCount % 5 == 1){
+			   	    	++index;
+			   	    	int temp = (frameCount - 1) / 5;
+			   	    	array_frame_count[index] = temp;
+			   	    }
+				}
+				
+				if (f==3)
+				{
+					   
+					stringstream convert(cell);
+	                convert >> frame;
+	                stringstream ss (stringstream::in | stringstream::out);
+				    ss << frame;
+					matchedVideo=ss.str();						
+				}
+				
+				if (f==4)
+				{
+					
+					stringstream convert(cell);
+	           		convert >> frame;
+					matchedVideoFrame=frame;
+					 	
+				}
+				
+				if (f==5)
+				{
+					
+				    stringstream convert(cell);
+	                convert >> frame;
+					similarity=frame;
+					//cout<<similarity<<"\n";
+					f=0;
+			    }
+				
+				if(videoMap.empty() || videoMap.count(video) == 0){
+					videoMap[video] = videoCount;
+					videoCount++;
+				}	
+			    
+				 
+			//first loop ends
+				
+			}
+		}//second loop
+	}
+	
+array_frame_count[++index] = frameCount / 5;   // initializes frame count for last video
+file3.close();
+
+int row=array_frame_count[index];
+
+float column_sum[row];
+adj_matrix.resize(row);
+identity_matrix.resize(row);
+P.resize(row);
+Q.resize(row);
+x.resize(row);
+y.resize(row);
+similarity_score.resize(row);
+
+for(int i = 0 ; i < row ; i++){
+	adj_matrix[i].resize(row);
+	identity_matrix[i].resize(row);
+	P[i].resize(row);
+	Q[i].resize(row);
+	similarity_score[i].resize(row);
+}
+
+for(int i = 0; i < row ; i++){
+	for(int j = 0; j < row; j++){
+		similarity_score[i][j] = 0;
+	}
+}
+// initializes identity matrix
+for(int j = 0; j < row; j++){
+	identity_matrix[j][j] = 1;
+}	    	
+	   
+	   
+	    
+std::ifstream file("3b2.csv");
+if(file.good())
+{
+	
+	while(std::getline(file,line))
+	    {
+	    	
+	    	std::stringstream  lineStream(line);
+	        std::string cell;
+	        while (getline(lineStream,cell,','))
+	        {	
+			  
+			   f=f+1; 
+			           
+				if (f==1)
+				{
+					
+					stringstream convert(cell);
+	            	convert >> frame;
+	            	stringstream ss (stringstream::in | stringstream::out);
+				    ss << frame;
+					video = ss.str();
+					//cout<<video << ",";
+					
+				}
+				
+				if (f==2)
+				{
+					
+					stringstream convert(cell);
+	                convert >> frame;
+			   	    videoFrame=frame;
+					//cout<<videoFrame << ",";	
+			   	    
+				}
+				
+				if (f==3)
+				{
+					   
+					stringstream convert(cell);
+	                convert >> frame;
+	                stringstream ss (stringstream::in | stringstream::out);
+				    ss << frame;
+					matchedVideo=ss.str();
+					//cout<<matchedVideo << ",";						
+				}
+				
+				if (f==4)
+				{
+					
+					stringstream convert(cell);
+	           		convert >> frame;
+					matchedVideoFrame=frame;
+					//cout<<matchedVideoFrame << ",";
+					 	
+				}
+				
+				if (f==5)
+				{
+					
+				    stringstream convert(cell);
+	                convert >> frame;
+					similarity=frame;
+					//cout<<similarity << ";" << "\n";					
+					f=0;
+			    }		    
+				 
+				
+			}//first loop ends
+			int queryFrame = array_frame_count[videoMap[video] - 1];
+			int matchedFrame = array_frame_count[videoMap[matchedVideo] - 1];
+			int rowIndex = queryFrame + videoFrame - 1;
+			int columnIndex = matchedFrame + matchedVideoFrame - 1;
+			if(rowIndex < row && columnIndex < row){
+				// infinity value not handled
+			   if(adj_matrix[rowIndex][columnIndex] == 0){
+			   adj_matrix[rowIndex][columnIndex] = similarity;
+		    }	
+			}
+		}//second loop
+	}
+	for(int i = 0; i < row; i++){
+		float sum = 0.00;
+		for(int j = 0; j < row; j++){
+			 sum = sum + adj_matrix[j][i];
+		}
+		column_sum[i] = sum;
+	}
+	//cout << adj_matrix[0][486] << "\n";
+	for(int i = 0; i < row; i++){
+		for(int j = 0; j < row; j++){
+			if(column_sum[i] != 0){
+			P[j][i] = adj_matrix[j][i] / column_sum[i];
+		}
+			else{
+				P[j][i] = 0;
+			}
+		}		
+	}
+	
+		for(int i = 0; i < row; i++){
+		for(int j = 0; j < row; j++){
+			int v=exp(-adj_matrix[i][j]);
+		Q[i][j]=P[i][j]*(1-v);
+		}		
+	}
+	
+	// Taking transpose of P matrix and storing back in the same P matrix
+	
+	for(int i = 0; i < row; i++){
+		for(int j = i+1; j< row; j++){
+			//cout << P[i][j] << "\n";
+			float temp = Q[i][j];
+			Q[i][j] = Q[j][i];
+			Q[j][i] = temp;			
+		}
+	}
+//	cout << P[486][0] << "\n";
+	// multiplying c with P matrix and again storing back in the same P matrix
+	for(int i = 0; i < row; i++){
+		for(int j = 0; j< row; j++){
+			Q[i][j] = c * Q[i][j];	
+			Q[i][j] = identity_matrix[i][j] - Q[i][j];	
+			//cout << P[i][j] << "\n";
+			identity_matrix[i][j] = (1 - c) * identity_matrix[i][j];
+		}
+	}
+	cout << P[486][0] << "\n";
+	cout << identity_matrix[767][767];
+	
+	// Gauss siedel approach to calculate similarity score matrix
+	
+
+	do{
+		big = 0;
+	for(int col = 0; col < row; col++){		
+			for(int i = 0; i < row; i++){
+				float sum = 0;
+				for(int j = 0; j < row; j++){
+					if(i != j){
+						sum = sum + (Q[i][j] * similarity_score[j][col]);	
+					}
+				}
+				temp = (identity_matrix[i][col] - sum)/Q[i][i];
+				error = fabs(identity_matrix[i][0] - temp);
+				if(error > big){
+					big = error;
+				}
+				similarity_score[i][col] = temp;
+				
+			}
+		}
+		m--;
+	}while(m >= 0);
+
+//	
+	int total_colummns= similarity_score[0].size();
+//	cout <<"total columns:"<<total_colummns<<endl;
+	
+    float similarity_frame_array[total_colummns];
+	int count_similarity_frame_array=0;
+	
+	for (int t=0;t<total_colummns;t++)
+	{
+		column_summ=0; 
+		nonzero_value=0;
+		
+		for (int y=0;y<row;y++)
+		{
+			
+			if (similarity_score[y][t]!=0)
+			{
+				nonzero_value=nonzero_value+1;
+				column_summ=column_summ+similarity_score[y][t];				
+			}
+			
+		}// row is read
+			
+		similarity_frame_array[count_similarity_frame_array]= (column_summ)*nonzero_value/row;
+		count_similarity_frame_array=count_similarity_frame_array+1;
+	} //column is read
+	
+		count_similarity_frame_array=count_similarity_frame_array -1;
+		//cout<<"count_similarity_frame_array--"<<count_similarity_frame_array<<endl;
+		count_similarity_frame_array=0;
+			
+	for (int t=0;t<row;t++)
+	{
+		column_summ=0; 
+		nonzero_value=0;
+		
+		for (int y=0;y<total_colummns;y++)
+		{
+			
+			if (similarity_score[y][t]!=0)
+			{
+				nonzero_value=nonzero_value+1;
+				column_summ=column_summ+similarity_score[y][t];				
+			}
+			
+		}// row is read
+			int temp=similarity_frame_array[count_similarity_frame_array];
+		similarity_frame_array[count_similarity_frame_array]= (column_summ)*nonzero_value/total_colummns;
+		similarity_frame_array[count_similarity_frame_array]=similarity_frame_array[count_similarity_frame_array] + temp;
+		count_similarity_frame_array=count_similarity_frame_array+1;
+	} //column is read
+	
+		count_similarity_frame_array=count_similarity_frame_array -1;
+		
+		
+		
+		for (int i = 0; i <=count_similarity_frame_array; ++i) {
+         cout<< similarity_frame_array[i]<<",";
+        }
+  
+		
+		 std::priority_queue<std::pair<float, int> > q;
+ 
+ for (int i = 0; i <=count_similarity_frame_array; ++i) {
+    q.push(std::pair<float, int>(similarity_frame_array[i], i));
+  }
+  
+ // cout<<"q size-"<<q.size()<<endl;
+ // number of indices we need
+  int top_m_frame[k];
+ int count_top_m_frame=0;
+//  
+  for (int i = 0; i < k; ++i) {
+  //	cout<<"entered in q loop:"<<i;
+   float ki = q.top().second;
+    std::cout << "index[" << i << "] = " << ki << std::endl;
+    top_m_frame[count_top_m_frame]=ki;
+	count_top_m_frame=count_top_m_frame+1;
+   q.pop();
+ }
+ 
+  ofstream myfile;
+  myfile.open ("example.txt");
+//  myfile << "Writing this to a file.\n";
+ 
+	   	
+	count_top_m_frame=count_top_m_frame-1;
+	for (int u=0;u<=count_top_m_frame;u++)
+	{
+		int h=top_m_frame[u];
+		int s=0;	
+		while(s!=index-1)	
+		{
+			if (array_frame_count[s]<h && h<=array_frame_count[s+1])
+			{
+			   int video_number=s+1;
+			   int frame_number= h- array_frame_count[s];
+			   myfile <<"frame:"<<frame_number<<",";
+			   myfile<<"video:"<<video_number;
+			   myfile<<endl;
+			   break;
+			}
+			else if (array_frame_count[s]==h)
+			{
+			   int video_number=s;
+			   int frame_number= h- array_frame_count[s-1];
+			   myfile <<"frame:"<<frame_number<<",";
+			   myfile<<"video:"<<video_number;
+			   myfile<<endl;
+				break;
+			}
+			else
+			
+			{
+				s=s+1;
+			}
+		}
+	}
+	
+	
+	 myfile.close();
+file.close();
+return 0;
+}
